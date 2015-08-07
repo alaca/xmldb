@@ -1,0 +1,886 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<head lang="en">
+	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+	<title>XML Db documentation</title>
+	<!-- Framework CSS -->
+	<link rel="stylesheet" href="assets/blueprint-css/screen.css" type="text/css" media="screen, projection">
+	<link rel="stylesheet" href="assets/blueprint-css/print.css" type="text/css" media="print">
+	<!--[if lt IE 8]><link rel="stylesheet" href="assets/blueprint-css/ie.css" type="text/css" media="screen, projection"><![endif]-->
+	<link rel="stylesheet" href="assets/blueprint-css/plugins/fancy-type/screen.css" type="text/css" media="screen, projection">
+	<style type="text/css" media="screen">
+		p, table, hr, .box { margin-bottom:25px; }
+		.box p { margin-bottom:10px; }
+	</style>
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=php"></script>
+</head>
+
+
+<body>
+	<div class="container">
+	
+
+		
+		<h1 class="center">&ldquo;XML Db&rdquo;</h1>
+		
+
+		
+		<h2 id="toc" class="alt">Table of Contents</h2>
+		<ol class="alpha">
+			<li><a href="#introduction">Introduction</a></li>
+			<li><a href="#structure">Xml database structure</a></li>
+            <li><a href="#api">API</a></li>
+			<li><a href="#usage">Using XML Db</a></li>
+		</ol>
+		
+		<hr>
+		
+		<h3 id="introduction"><strong>A) Introduction</strong> - <a href="#toc">top</a></h3>
+		<p>XML Db is a flat-file database that use XML files for storing and organizing data. It doesn't need any database systems such as MySQL or SQLite.<br />
+        </p>
+		<hr>
+
+		<h3 id="structure"><strong>B) Xml database structure</strong> - <a href="#toc">top</a></h3>
+
+<pre class="prettyprint">
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;database&gt;
+    &lt;table&gt;
+        &lt;row&gt;
+            &lt;id&gt;1&lt;/id&gt;
+            &lt;column1&gt;one&lt;/column1&gt;
+            &lt;column2&gt;two&lt;/column2&gt;
+            &lt;column3&gt;three&lt;/column3&gt;
+        &lt;/row&gt;
+        &lt;row&gt;
+            &lt;id&gt;2&lt;/id&gt;
+            &lt;column1&gt;four&lt;/column1&gt;
+            &lt;column2&gt;five&lt;/column2&gt;
+            &lt;column3&gt;six&lt;/column3&gt;
+        &lt;/row&gt;
+        ...
+    &lt;/table&gt;
+    &lt;another_table&gt;
+        &lt;row&gt;
+            &lt;id&gt;1&lt;/id&gt;
+            &lt;another_column1&gt;one&lt;/another_column1&gt;
+            &lt;another_column2&gt;two&lt;/another_column2&gt;
+            &lt;another_column3&gt;three&lt;/another_column3&gt;
+        &lt;/row&gt;   
+        &lt;row&gt;
+            &lt;id&gt;2&lt;/id&gt;
+            &lt;another_column1&gt;four&lt;/another_column1&gt;
+            &lt;another_column2&gt;five&lt;/another_column2&gt;
+            &lt;another_column3&gt;six&lt;/another_column3&gt;
+        &lt;/row&gt;  
+        ...
+    &lt;/another_table&gt;
+&lt;/database&gt;
+</pre>        
+
+		<hr>
+		
+		<h3 id="api"><strong>C) API</strong> - <a href="#toc">top</a></h3>
+
+		<ul>
+            <li><strong><a href="#connect">xmlDb::conect($database)</a></strong> connect to database</li>
+            <li><strong><a href="#deleteDatabase">xmlDb::deleteDatabase($database)</a></strong> delete database</li>
+			<li><strong><a href="#chmodDatabase">xmlDb::chmodDatabase($database, $permissions)</a></strong> change permissions of database file</li>
+            <li><strong><a href="#getDatabasePerms">xmlDb::getDatabasePerms($database)</a></strong> get permissions of database file</li>
+            <li><strong><a href="#backup">backup()</a></strong> create database backup</li>
+            <li><strong><a href="#restore">restore()</a></strong> restore database backup</li>
+            <li><strong><a href="#addTable">addTable($name)</a></strong> add table to database</li>
+            <li><strong><a href="#removeTable">removeTable($name)</a></strong> remove table from database</li>
+            <li><strong><a href="#getTables">getTables()</a></strong> get table names from database</li>
+            <li><strong><a href="#addColumn">addColumn($name, $value)</a></strong> add column and column value to table</li>
+            <li><strong><a href="#removeColumn">removeColumn($name)</a></strong> remove column from table</li>
+            <li><strong><a href="#getColumns">getColumns($table)</a></strong> get column names from table</li>
+            <li><strong><a href="#insert">insert($data)</a></strong> insert data into database table</li>
+            <li><strong><a href="#update">update($data)</a></strong> update data from database table</li>
+            <li><strong><a href="#delete">delete()</a></strong> delete data from database</li>
+            <li><strong><a href="#getRow">getRow()</a></strong> get one row</li>
+            <li><strong><a href="#getAll">getAll()</a></strong> get all rows</li>
+            <li><strong><a href="#table">table($name)</a></strong> select table</li>
+            <li><strong><a href="#join">join($table, $primary_key, $foreign_key)</a></strong> join table on primary key and foreign key</li>
+            <li><strong><a href="#select">select($columns)</a></strong> list of columns to select</li>
+            <li><strong><a href="#where">where($query)</a></strong> xpath query</li>
+            <li><strong><a href="#limit">limit($num)</a></strong> limit result</li>
+            <li><strong><a href="#affectedRows">affectedRows()</a></strong> num of rows affected</li>
+            <li><strong><a href="#bind">bind($placholder, $value)</a></strong> bind data</li>
+            <li><strong><a href="#orderBy">orderBy($column, $direction)</a></strong> order result by column direction</li>
+            <li><strong><a href="#lastId">lastId()</a></strong> get last insert id from database</li>
+            
+        </ul>
+        
+
+		
+		<hr>
+		
+		<h3 id="usage"><strong>D) Using XML xmlDb</strong> - <a href="#toc">top</a></h3>
+        
+        <strong id="connect">Connecting to database</strong> - <a href="#api">top</a><br />
+        
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+$xmlDb = xmlDb::connect('database');
+
+// variable $xmlDb is now database object instance</pre>
+        If database file not exists it will be created automatically. Database files are stored in <strong>data</strong> directory which is protected with htaccess file.
+        <br /><br />
+
+        <strong id="deleteDatabase">Delete database</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// delete database
+xmlDb::deleteDatabase('database');</pre>
+        Delete the database file from data directory.
+        <br /><br />
+        
+        <strong id="chmodDatabase">Chmod database</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// chmod database file
+xmlDb::chmodDatabase('database', 0755);</pre>
+        Change database file permissions. Default permissions are set to 0644. See <a href="http://www.php.net/chmod">http://www.php.net/chmod</a> for more info.
+        <br /><br />
+        
+        
+        <strong id="getDatabasePerms">Get database file permissions</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+echo 'Database permissions ' . xmlDb::getDatabasePerms('database');
+</pre>
+        <br /><br />
+        
+        
+        <strong id="backup">Backup database</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// create backup
+$xmlDb->backup();</pre>
+        Backup files are stored in data directory with extension <strong>.bak</strong>.
+        <br /><br />
+        
+        
+        <strong id="restore">Restore database backup</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// restore database backup
+$xmlDb->restore();</pre>
+        <br /><br />
+        
+        
+        <strong id="addTable">Add table</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// add table
+$xmlDb->addTable('example_table');
+
+// we can have unlimited number of tables in one database so let's add another table
+$xmlDb->addTable('another_table');
+
+// and if we do somethnig like this 
+$xmlDb->addTable('another_table');
+$xmlDb->addTable('another_table');
+// only one table "another_table" will be added to database
+
+</pre>
+        <br /><br />
+        
+        
+        <strong id="removeTable">Remove table</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// remove table and all its contents
+$xmlDb->removeTable('another_table');
+</pre>
+        <br /><br />
+        
+        
+        <strong id="getTables">Get table names</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// get tables names
+$tables = $xmlDb->getTables();
+
+// print table names
+print_r($tables);</pre>
+        getTables() returns an array of table names
+        <br /><br />
+        
+        
+        <strong id="addColumn">Add column</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// add table
+$xmlDb->addTable('example_table');
+
+// for doing anything with table (adding columns, removing columns, selecting data) 
+// first we must select table by calling method table(table_name)
+
+// add column "id" and set its value to 1
+$xmlDb->table('example_table')->addColumn('id', 1);
+
+// add another column called "name"
+$xmlDb->table('example_table')->addColumn('name', 'John');
+
+// add another column called "lastname"
+$xmlDb->table('example_table')->addColumn('lastname', 'Doe');
+</pre>
+        addColumn() method is intended to extend the table structure, but can be used when creating new table for adding columns. <br />
+        If you add columns in new table on this way, <strong>column id must be set.</strong><br /><br />
+        Better way for adding columns in newly created table is by using method <a href="#insert">insert()</a>
+        <br /><br />
+        
+        
+        <strong id="removeColumn">Remove column</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// remove column called "name" from table "example_table"
+$xmlDb->table('example_table')->removeColumn('name');</pre>
+        <br /><br />
+        
+        
+        <strong id="getColumns">Get columns</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// you can get columns names like this
+$columns = $xmlDb->table('example_table')->getColumns();
+
+// print columns
+print_r($columns);
+
+// or like this
+$columns = $xmlDb->getColumns('example_table');
+
+print_r($columns);
+</pre>
+        getColumns() returns an array of columns names
+        <br /><br />
+        
+        
+        <strong id="insert">Insert data</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// you can insert data in two different ways
+
+// by passing an array with column names and their values to insert method
+$data = array(
+    'name'     => 'My name',
+    'lastname' => 'My last name'
+);
+
+$xmlDb->table('example_table')->insert($data);
+
+
+// or by using method bind(column_name, value) with insert
+$xmlDb->table('example_table')
+      ->bind('name', 'My other name') 
+      ->bind('lastname', 'My other last name')
+      ->insert();
+
+
+// example how to create new table and insert data
+
+// create table
+$xmlDb->addTable('user_data');   
+
+// set data
+$data = array(
+    'username' => 'my_user_name',
+    'password' => md5('password'),
+    'email'    => 'demo@example.com',
+);
+
+// insert data into table
+$xmlDb->table('user_data')->insert($data);   
+</pre>
+        If the table where you want to insert data doesn't have any columns (newly created table), columns will be automatically added.<br />
+        Notice that we aren't set the column id. Column id is added and incremented automatically, we don't need to set it explicitly.
+        <br /><br />
+        
+        
+        <strong id="update">Update data</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// like insert() method, update() method also supports two different ways on how can you update data
+
+// by passing an array with column names and their values
+$data = array(
+    'name'     => 'My name',
+    'lastname' => 'My last name'
+);
+
+$xmlDb->table('example_table')->update($data);
+
+// or by using method bind(column_name, value)
+$xmlDb->table('example_table')
+      ->bind('name', 'My other name') 
+      ->bind('lastname', 'My other last name')
+      ->update();
+   
+// in both examples method update() will update all rows with columns "name", "lastname" in "example_table"
+
+
+
+// if we want to update one or many specific rows 
+// we need to use method where() with method update()
+
+
+// example how to update column "lastname" where value in column "name" equal to "John"
+
+$xmlDb->table('example_table')
+      ->where('name = "John"')
+      ->bind('lastname', 'Doe')
+      ->update();
+   
+// this will update all rows with column "lastname" and set column "lastname" value to "Doe"
+// in table "example_table" where column "name" equal to "John" 
+
+   
+// update columns "name", "lastname" in table "example_table" where column "id" equal to 5
+$xmlDb->table('example_table')
+      ->where('id = 5')
+      ->bind('name', 'Some name')
+      ->bind('lastname', 'Some last name')
+      ->update();
+   
+   
+// update columns "name", "lastname" in table "example_table" where column "name" equal to "John" 
+// and column "lastname" eaqul "Doe"
+$xmlDb->table('example_table')
+      ->where('name = "John" and lastname = "Doe"')
+      ->bind('name', 'Some name')
+      ->bind('lastname', 'Some last name')
+      ->update();
+   
+   
+// limiting update
+
+// we can also limt update by calling method limit()
+$xmlDb->table('example_table')
+      ->where('id > 3')
+      ->bind('name', 'Updated name')
+      ->limit(5)
+      ->update();
+   
+// this will update only 5 rows with column "name" and set column "name" value to "Updated name" 
+// where row column "id" is greater then 3
+
+// then you can check how many rows is actually updated by calling method affectedRows()
+echo 'Rows updated: ' . $xmlDb->affectedRows();
+
+</pre>
+ 
+        <br /><br />
+        
+        
+        <strong id="delete">Delete data</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// this will delete all rows in table "example_table"
+$xmlDb->table('example_table')->delete();
+
+
+// using where() method
+
+// delete all rows where column "name" equal to "John" 
+$xmlDb->table('example_table')
+      ->where('name = "John"')
+      ->delete();
+   
+   
+// limiting delete
+
+// we can limt delete by calling method limit()
+$xmlDb->table('example_table')
+      ->where('id > 3')
+      ->limit(5)
+      ->delete();
+// this will delete 5 rows where row column "id" is greater then 3
+
+// then we can check how many rows is deleted by calling method affectedRows()
+echo 'Rows deleted: ' . $xmlDb->affectedRows();
+  
+</pre>
+        <br /><br />
+        
+        
+        <strong id="getRow">Get row</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// select table and columns
+$xmlDb->table('example_table')
+      ->select('id, name, lastname');
+
+// get row
+$row = $xmlDb->getRow();
+
+// print data
+echo $row->id . '&lt;br /&gt;';
+echo $row->name . '&lt;br /&gt;';
+echo $row->lastname . '&lt;br /&gt;';
+
+</pre>
+        getRow() returns object with column names as properties, if there is no data returns false
+        <br /><br />
+        
+        <strong id="getAll">Get all</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// select table and columns
+$xmlDb->table('example_table')
+      ->select('id, name, lastname');
+
+// get all rows
+$rows = $xmlDb->getAll();
+
+// print data
+foreach($rows as $row)
+{
+    echo $row->id . '&lt;br /&gt;';
+    echo $row->name . '&lt;br /&gt;';
+    echo $row->lastname . '&lt;br /&gt;';
+}
+
+</pre>
+        getAll() returns an array of objects, if there is no data returns false
+        <br /><br />
+        
+        
+        <strong id="table">Select table</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// select table to operate
+$xmlDb->table('example_table');
+</pre>
+        <br /><br />
+        
+        
+        
+        <strong id="join">Join table</strong> - <a href="#api">top</a><br />
+
+
+Let's say we have two relational tables (users and users_data) in one database
+<pre class="prettyprint">
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;database&gt;
+    &lt;users&gt;
+        &lt;row&gt;
+            &lt;id&gt;1&lt;/id&gt;
+            &lt;username&gt;user&lt;/username&gt;
+            &lt;password&gt;pass&lt;/password&gt;
+            &lt;email&gt;user1@example.com&lt;/email&gt;
+        &lt;/row&gt;
+        &lt;row&gt;
+            &lt;id&gt;2&lt;/id&gt;
+            &lt;username&gt;user2&lt;/username&gt;
+            &lt;password&gt;pass2&lt;/password&gt;
+            &lt;email&gt;user2@example.com&lt;/email&gt;
+        &lt;/row&gt;
+    &lt;/users&gt;
+    &lt;users_data&gt;
+        &lt;row&gt;
+            &lt;id&gt;1&lt;/id&gt;
+            &lt;user_id&gt;1&lt;/user_id&gt;
+            &lt;name&gt;User 1&lt;/name&gt;
+            &lt;lastname&gt;User 1 lastname&lt;/lastname&gt;
+        &lt;/row&gt;
+        &lt;row&gt;
+            &lt;id&gt;2&lt;/id&gt;
+            &lt;user_id&gt;2&lt;/user_id&gt;
+            &lt;name&gt;User 2&lt;/name&gt;
+            &lt;lastname&gt;User 2 lastname&lt;/lastname&gt;
+        &lt;/row&gt;
+    &lt;/users_data&gt;
+&lt;/database&gt;
+</pre>
+Getting data
+<pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// conect to xmlDb
+$xmlDb = xmlDb::connect('database');
+
+// join tables
+$xmlDb->table('users')
+      ->join('users_table' ,'id', 'user_id') //join() method must come immediately after table() method
+      ->select('*');
+// this will combine data from two tables where column "id" of "users" table
+// euqals to column "user_id" of "users_data" table
+
+$data = $xmlDb->getAll();
+
+print_r($data);
+
+// using where()
+
+$xmlDb->table('users')
+      ->join('users_table' ,'id', 'user_id')
+      ->select('id, name, lastname')
+      ->where('id = 2'); // where "users" table "id" euqal 2
+
+$user = $xmlDb->getRow();
+
+echo $user->id . '&lt;br /&gt;';
+echo $user->name . '&lt;br /&gt;';
+echo $user->lastname;
+
+</pre>
+        <br /><br />
+        
+        <strong id="select">Select columns</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// select all columns by using asterisk "*"
+$xmlDb->table('example_table')->select('*');
+
+// select columns we need by specifying their names
+// column names must be separated by comma
+$xmlDb->table('example_table')->select('id, name, lastname');
+</pre>
+        <br /><br />
+        
+        
+        <strong id="where">Where query</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+$xmlDb->table('users')
+      ->select('id, name, lastname')
+      ->where('name = "John" or name = "Jane" and id >= 5 and id <= 10');
+// select (id, name, lastname) where name equal to "John" 
+// or name equal to "Jane" and id greater then or equal to 5 and id less then or equal to 10
+
+$data = xmlDb->getAll();
+
+print_r($data);
+
+
+// where() method also supports placholders in query
+$xmlDb->table('users')
+      ->select('id, name, lastname')
+      ->where('name = :name and id = :id')
+      ->bind('name', 'John'); // set placholder :name value to "John"
+      ->bind('id', 5); // set placholder :id value to 5
+   
+$data = xmlDb->getAll();
+
+print_r($data);
+
+</pre>
+        <strong>Supported operators</strong><br /><br />
+        
+
+<table class="reference notranslate">
+  <tbody><tr>
+    <th style="width:25%">Operator</th>
+    <th style="width:35%">Description</th>
+    <th>Example</th>
+  </tr>
+  <tr>
+    <td>+</td>
+    <td>Addition</td>
+    <td>6 + 4</td>
+  </tr>
+  <tr>
+    <td>-</td>
+    <td>Subtraction</td>
+    <td>6 - 4</td>
+  </tr>
+  <tr>
+    <td>*</td>
+    <td>Multiplication</td>
+    <td>6 * 4</td>
+  </tr>
+  <tr>
+    <td>div</td>
+    <td>Division</td>
+    <td>8 div 4</td>
+  </tr>
+  <tr>
+    <td>=</td>
+    <td>Equal</td>
+    <td>price = 9.80</td>
+  </tr>
+    <tr>
+    <td>!=</td>
+    <td>Not equal</td>
+    <td>price != 9.80</td>
+  </tr>
+    <tr>
+    <td>&lt;</td>
+    <td>Less than</td>
+    <td>price &lt; 9.80</td>
+  </tr>
+    <tr>
+    <td>&lt;=</td>
+    <td>Less than or equal to</td>
+    <td>price &lt;= 9.80</td>
+  </tr>
+    <tr>
+    <td>&gt;</td>
+    <td>Greater than</td>
+    <td>price &gt; 9.80</td>
+  </tr>
+    <tr>
+    <td>&gt;=</td>
+    <td>Greater than or equal to</td>
+    <td>price &gt;= 9.80</td>
+  </tr>
+    <tr>
+    <td>or</td>
+    <td>or</td>
+    <td>price = 9.80 or price = 9.70</td>
+  </tr>
+    <tr>
+    <td>and</td>
+    <td>and </td>
+    <td>price &gt; 9.00 and price &lt; 9.90</td>
+  </tr>
+  <tr>
+    <td>mod</td>
+    <td>Modulus (division remainder)</td>
+    <td>5 mod 2</td>
+  </tr>
+</tbody></table>
+
+        <br /><br />
+        
+        
+        <strong id="limit">Limit</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// limit result
+$xmlDb->table('users')
+      ->select('*')
+      ->limit(10);
+
+$data = xmlDb->getAll();
+
+echo 'Rows selected: ' . count($data);
+
+
+// limit update
+$xmlDb->table('users')
+      ->where('id > 3')
+      ->bind('name', 'Updated name')
+      ->limit(5)
+      ->update();
+   
+echo 'Rows updated: ' . $xmlDb->affectedRows();
+
+
+// limit delete
+$xmlDb->table('example_table')
+      ->where('id > 3')
+      ->limit(5)
+      ->delete();
+   
+echo 'Rows deleted: ' . $xmlDb->affectedRows();
+</pre>
+
+    <br /><br />
+
+        
+        <strong id="affectedRows">Affected rows</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+$xmlDb->table('users')
+      ->where('id > 3')
+      ->bind('name', 'Updated name')
+      ->update();
+   
+echo 'Rows updated: ' . $xmlDb->affectedRows();
+
+
+$xmlDb->table('example_table')
+      ->where('id > 3')
+      ->delete();
+   
+echo 'Rows deleted: ' . $xmlDb->affectedRows();
+</pre>
+        affectedRows() is used with method update() and method delete() to get number of rows updated/deleted
+        <br /><br />
+        
+        
+        
+        <strong id="bind">Bind</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// binding values to query placeholders
+$xmlDb->table('example_table')
+      ->where('id = :id') // we have placholder :id in query
+      ->bind('id', 5) // bind value to placholder :id
+      ->update();
+
+// binding column names and their values for insert
+$xmlDb->table('example_table')
+      ->bind('name', 'My other name') // bind value to column "name" 
+      ->bind('lastname', 'My other last name') // bind value to column "lastname"
+      ->insert();
+
+// binding placholder value and column names for update
+$xmlDb->table('example_table')
+      ->where('id = :id')
+      ->bind('id', 5) // bind value to placholder :id
+      ->bind('name', 'Some name') // bind value to column "name"
+      ->bind('lastname', 'Some last name') // bind value to column "lastname"
+      ->update();
+</pre>
+        <br /><br />
+        
+        
+        <strong id="orderBy">Order by</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// orderBy() method takes two params, column name and direction of sorting (asc or desc)
+$xmlDb->table('example_table')
+      ->select('id, name, lastname')
+      ->orderBy('name', 'asc');
+   
+$data = $xmlDb->getAll();
+
+print_r($data);
+
+
+$xmlDb->table('example_table')
+      ->select('id, name, lastname')
+      ->where('id > 5')
+      ->limit(5)
+      ->orderBy('id', 'desc');
+   
+$data = $xmlDb->getAll();
+
+print_r($data);
+</pre>
+        <br /><br />
+        
+        
+        <strong id="lastId">Last id</strong> - <a href="#api">top</a><br />
+        <pre class="prettyprint">
+// include xmlDb class
+require 'database/xmldb.php';
+
+// connect to database 
+$xmlDb = xmlDb::connect('database');
+
+// get value of last inserted id
+
+// select table
+$xmlDb->table('example_table');
+
+echo 'Last inserted id ' . $xmlDb->lastId();
+</pre>
+        <br /><br />
+        
+
+		
+		<hr class="space">
+	</div><!-- end div .container -->
+</body>
+</html>
