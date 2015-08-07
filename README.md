@@ -1,3 +1,3 @@
 # xmldb
 
-XML db
+XML Db Flat-file xml database
