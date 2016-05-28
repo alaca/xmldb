@@ -1,8 +1,13 @@
 <?php
 /**
-* xmlDb class 
-*/
-
+ * PHP XML DB
+ * 
+ * Store and retrieve data records in XML files
+ * 
+ * @copyright 2015
+ * @author Ante Laca <ante.laca@gmail.com>
+ * 
+ */
 class xmlDb
 {
     private static $instance = array();
