@@ -1,6 +1,4 @@
-# xmldb
-
-PHP XML Database
+# PHP XML Database
 
 
 ###Connect 
