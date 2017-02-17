@@ -167,9 +167,7 @@ class xmlDb
     public static function chmod($database, $permissions = 0644)
     {
         if (file_exists($file = dirname(__FILE__) . '/data/' . $database . '.xml')) {
-
             return chmod($file, $permissions); 
-
         }
         
         return false;    
@@ -211,10 +209,8 @@ class xmlDb
     public function removeTable($name)
     {
         foreach ($this->xml->xpath('//database/' . $name) as $row) { 
-
             $node = dom_import_simplexml($row);
             $node->parentNode->removeChild($node);
-
         }
         
         return $this->save();    
@@ -551,7 +547,6 @@ class xmlDb
     {
 
 		$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
-        
         $this->sort = [$column, $direction];
         
         return $this;   
