@@ -148,9 +148,13 @@ class xmlDb
     public static function dropDatabase($database)
     {
         if (file_exists($file = dirname(__FILE__) . '/data/' . $database . '.xml')) {
+<<<<<<< HEAD
 
             static::clearCache();
             
+=======
+            static::clearCache();
+>>>>>>> origin/master
             return unlink($file);  
         }
         
@@ -167,7 +171,10 @@ class xmlDb
     public static function chmod($database, $permissions = 0644)
     {
         if (file_exists($file = dirname(__FILE__) . '/data/' . $database . '.xml')) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
             return chmod($file, $permissions); 
 
         }
@@ -195,9 +202,13 @@ class xmlDb
     public function addTable($name)
     {     
         if (empty($table = $this->xml->xpath($name))) {
+<<<<<<< HEAD
 
             $table = $this->xml->addChild($name)->addChild('row');
 
+=======
+            $table = $this->xml->addChild($name)->addChild('row');
+>>>>>>> origin/master
             return $this->save();     
         }           
     }
@@ -211,7 +222,10 @@ class xmlDb
     public function removeTable($name)
     {
         foreach ($this->xml->xpath('//database/' . $name) as $row) { 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
             $node = dom_import_simplexml($row);
             $node->parentNode->removeChild($node);
 
@@ -282,7 +296,10 @@ class xmlDb
         $table = $this->table;
         
         foreach($this->xml->$table as $row) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
             foreach($row as $i => $column) {
                 unset($column->$name);
             } 
@@ -723,7 +740,10 @@ class xmlDb
     private function save()
     {        
 		static::clearCache();
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
         return $this->xml->asXML($this->db);   
     }
     
@@ -780,4 +800,8 @@ class xmlDb
 			unlink($file);
 		}
 	}
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/master

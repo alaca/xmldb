@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <?php
+=======
+# PHP XML Database
+>>>>>>> origin/master
 
 
 ###Connect 
@@ -164,4 +168,8 @@ $xmlDb->table('example_table')
       ->delete();
 
 echo 'Rows deleted: ' . $xmlDb->affectedRows();
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> origin/master
