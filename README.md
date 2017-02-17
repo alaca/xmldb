@@ -1,5 +1,4 @@
-<?php
-
+# PHP XML DATABASE - XMLDB
 
 ###Connect 
 ```php
