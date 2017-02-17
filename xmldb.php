@@ -1,29 +1,29 @@
 <?php
 /**
  * PHP XML DB
- * 
- * Store and retrieve data records in XML files
- * 
+ *  
  * @copyright 2015
  * @author Ante Laca <ante.laca@gmail.com>
  * 
  */
 class xmlDb
 {
-    private static $instance = array();
-    private $fh = null;
-    private $file = null;
-    private $xml = null;
-    private $query = null;
-    private $bind = array();
-    private $limit = 0;
-    private $table = null;
-    private $columns = array();
-    private $sort = null;
-    private $join_table = null;
-    private $primary_key = null;
-    private $foreign_key = null;
-    private $affected_rows = 0;
+	private static $instance = [];
+
+	private $db            = null;
+	private $fh            = null;
+	private $lock          = null;
+	private $xml           = null;
+	private $table         = null;
+	private $query         = null;
+	private $bind          = [];
+	private $columns       = [];
+	private $sort          = [];
+	private $join_table    = null;
+	private $primary_key   = null;
+	private $foreign_key   = null;
+	private $limit         = 0;
+	private $affected_rows = 0;
     
     
     /**
@@ -31,71 +31,64 @@ class xmlDb
     */
     private function __construct($database)
     {        
-        // in use database file
-        $this->in_use = dirname(__FILE__) . '/data/' . $database . '.lock';
+        // lock file
+        $this->lock = dirname(__FILE__) . '/data/' . $database . '.lock';
         
         // if file exists that means the db file is in use, so we wait - trying to prevent race condition
-        $i = 20;
-        while(true == file_exists($this->in_use))
-        {
-            usleep($i += 20); 
+        while (true == file_exists($this->lock)) {
+            usleep(10); 
         }
         
         // create in use file, we are using this db now  
-        $i = 20;  
-        while(false == $this->fh = @fopen($this->in_use, 'w'))
-        {
-            usleep($i += 20);
+        while (!$this->fh = @fopen($this->lock, 'w')) {
+            usleep(10); 
         }
         
-        // wait for file lock
-        $i = 20;     
-        while(false == flock($this->fh, LOCK_EX))
-        {
-            usleep($i += 20);
+        // wait until file is locked    
+        while (!flock($this->fh, LOCK_EX)) {
+            usleep(10); 
         }
         
         // register shutdown 
-        register_shutdown_function(array($this, '__unlock')); 
+        register_shutdown_function([$this, '__unlock']); 
         
         
-        // in use file is created and locked, now we can work with database
+        // .lock file is created and locked, now we can work with database
         
         // db file
-        $this->file = dirname(__FILE__) . '/data/' . $database . '.xml';
+        $this->db = dirname(__FILE__) . '/data/' . $database . '.xml';
         
-        if(false == file_exists($this->file))
-        {
+        if (!file_exists($this->db)) {
             // if db file not exists, create db file with db schema
-            file_put_contents($this->file, '<?xml version="1.0" encoding="utf-8"?><database></database>'); 
-            
+            file_put_contents($this->db, '<?xml version="1.0" encoding="utf-8"?><database></database>'); 
             // set permissions on db file
-            xmlDb::chmodDatabase($database);  
+            xmlDb::chmod($database);  
         }
         
-        libxml_use_internal_errors(true);
-        
-        // load xml
-        try
-        {
-            $this->xml = new SimpleXMLElement(file_get_contents($this->file));
-        } 
-        catch(Exception $e)
-        {
+        // try to load xml
+        try {
+
+			libxml_use_internal_errors(true);
+
+            $this->xml = new SimpleXMLElement(file_get_contents($this->db));
+
+        } catch(Exception $e) {
+
             exit('Error: ' . $e->getMessage());
+
         } 
     }
     
     
     /**
-    * unlock and delete in use file
+    * unlock and delete .lock file
     * 
     */
     public function __unlock()
     {
         flock($this->fh, LOCK_UN);
         fclose($this->fh); 
-        @unlink($this->in_use);   
+        @unlink($this->lock);   
     }
     
     
@@ -106,12 +99,11 @@ class xmlDb
     */
     public static function connect($database)
     {
-        if(false == isset(self::$instance[$database]))
-        {
-            self::$instance[$database] = new self($database);
+        if (!isset(static::$instance[$database])) {
+            static::$instance[$database] = new self($database);
         }  
         
-        return self::$instance[$database];
+        return static::$instance[$database];
     }
         
     
@@ -121,8 +113,7 @@ class xmlDb
     */
     public function backup()
     {
-        if(false == copy($this->file, $this->file . '.bak'))
-        {
+        if (!copy($this->db, $this->db . '.bak')) {
             exit('Error: can\'t create backup');    
         }   
          
@@ -136,14 +127,13 @@ class xmlDb
     */
     public function restore()
     {
-        if(file_exists($this->file . '.bak'))
-        {
-            if(false == copy($this->file . '.bak', $this->file))
-            {
+        if (file_exists($this->db . '.bak')) {
+
+            if (!copy($this->db . '.bak', $this->db)) {
                 exit('Error: can\'t restore backup');
             }
             
-            self::_clearCache();     
+            static::clearCache();     
         }
 
         return $this;
@@ -155,14 +145,10 @@ class xmlDb
     *  
     * @param string $database
     */
-    public static function deleteDatabase($database)
+    public static function dropDatabase($database)
     {
-        $file = dirname(__FILE__) . '/data/' . $database . '.xml';
-        
-        if(file_exists($file))
-        {
-            self::_clearCache();
-            
+        if (file_exists($file = dirname(__FILE__) . '/data/' . $database . '.xml')) {
+            static::clearCache();
             return unlink($file);  
         }
         
@@ -176,12 +162,9 @@ class xmlDb
     * @param string $database
     * @param int $permissions
     */
-    public static function chmodDatabase($database, $permissions = 0644)
+    public static function chmod($database, $permissions = 0644)
     {
-        $file = dirname(__FILE__) . '/data/' . $database . '.xml';
-        
-        if(file_exists($file))
-        {
+        if (file_exists($file = dirname(__FILE__) . '/data/' . $database . '.xml')) {
             return chmod($file, $permissions); 
         }
         
@@ -207,16 +190,9 @@ class xmlDb
     */
     public function addTable($name)
     {     
-        $table = $this->xml->xpath($name);
-        
-        if(empty($table))
-        {
-            $table = $this->xml->addChild($name);
-            $table->addChild('row');
-            
-            self::_clearCache();
-
-            return $this->_save();     
+        if (empty($table = $this->xml->xpath($name))) {
+            $table = $this->xml->addChild($name)->addChild('row');
+            return $this->save();     
         }           
     }
     
@@ -228,15 +204,12 @@ class xmlDb
     */
     public function removeTable($name)
     {
-        foreach($this->xml->xpath('//database/' . $name) as $row)
-        { 
+        foreach ($this->xml->xpath('//database/' . $name) as $row) { 
             $node = dom_import_simplexml($row);
             $node->parentNode->removeChild($node);
         }
         
-        self::_clearCache();
-        
-        return $this->_save();    
+        return $this->save();    
     }
     
     
@@ -246,17 +219,16 @@ class xmlDb
     */
     public function getTables()
     {
-        $tables = array();
-        
+
         $rows = $this->xml->xpath('//database');
                 
-        if(empty($rows))
-        {
-            return $tables;
+        if (empty($rows)) {
+            return [];
         }
+		
+		$tables = [];
         
-        foreach($rows[0] as $table)
-        {
+        foreach ($rows[0] as $table) {
             $tables[] = $table->getName();
         }
         
@@ -272,23 +244,21 @@ class xmlDb
     */
     public function addColumn($name, $value = '')
     {
-        if(false == is_null($this->table))
-        {
-            $rows = $this->xml->xpath('//database/' . $this->table . '/row');
-            
-            foreach($rows as $row)
-            {
+        if (!is_null($this->table)) {
+
+            foreach ($this->xml->xpath('//database/' . $this->table . '/row') as $row) {
                 if(isset($row->$name)) continue;
                 $row->addChild($name, $value);    
             }
             
-            self::_clearCache();
+            static::clearCache();
             
-            return $this->_save();   
-        } 
-        else
-        {
+            return $this->save();  
+ 
+        } else {
+
             exit('Error: can\'t add column, table not selected');
+
         }
             
     }
@@ -303,17 +273,13 @@ class xmlDb
     {  
         $table = $this->table;
         
-        foreach($this->xml->$table as $row)
-        {
-            foreach($row as $k => $column)
-            {
+        foreach($this->xml->$table as $row) {
+            foreach($row as $i => $column) {
                 unset($column->$name);
             } 
         }
-        
-        self::_clearCache();
-        
-        return $this->_save();
+                
+        return $this->save();
           
     }
     
@@ -325,19 +291,18 @@ class xmlDb
     */
     public function getColumns($table = null)
     {
+
         $table = is_null($table) ? $this->table : $table;
-                
-        $columns = array();
         
         $rows = $this->xml->xpath('//database/' . $table . '/row[position()=1]');
         
-        if(empty($rows))
-        {
-            return $columns;
+        if (empty($rows)) {
+            return [];
         }
+
+		$columns = [];
         
-        foreach($rows[0] as $column)
-        {
+        foreach($rows[0] as $column) {
             $columns[] = $column->getName();
         }
         
@@ -383,31 +348,30 @@ class xmlDb
     * 
     * @param string $columns
     */
-    public function select($columns)
+    public function select($select)
     {
-        if($columns != '*')
-        {
-            if(strpos($columns, ','))
-            {
-                $_columns = explode(',', $columns);
-                $_columns = array_map('trim', $_columns);
+		$select = trim($select);
+
+        if ($select != '*') {
+
+            if (strpos($select, ',')) {
+                $columns = explode(',', $select);
+                $columns = array_map('trim', $select);
+            } else {
+                $columns[] = $select;
             }
-            else
-            {
-                $_columns[] = $columns;
-            }
-        }
-        else
-        {
-            $_columns = $this->getColumns();
+
+        } else {
+
+            $columns = $this->getColumns();
             
-            if($this->join_table)
-            {
-                $_columns = array_unique(array_merge($_columns, $this->getColumns($this->join_table)));
+            if ($this->join_table) {
+                $columns = array_unique(array_merge($columns, $this->getColumns($this->join_table)));
             }
+
         }
 
-        $this->columns = $_columns;
+        $this->columns = $columns;
     
         return $this;    
     }
@@ -434,12 +398,9 @@ class xmlDb
     */
     public function bind($name, $value)
     {
-        if(strpos($this->query, ':' . $name))
-        {
+        if (strpos($this->query, ':' . $name)) {
             $this->query = str_replace(':' . $name, '"' . $value . '"', $this->query);
-        }
-        else
-        {
+        } else {
             $this->bind[$name] = $value;
         }
            
@@ -452,51 +413,46 @@ class xmlDb
     * 
     * @param array $data
     */
-    public function insert($data = array())
+    public function insert($data = [])
     {
-        if(false == empty($this->bind))
-        {
+        if (!empty($this->bind)) {
             $data = array_merge($data, $this->bind);
         }
-        
+
         $columns = $this->getColumns();
-        
+
         // first insert - no columns
-        if(empty($columns))
-        {
+        if (empty($columns)) {
+
             // add id if not set
-            if(false == array_key_exists('id', $data))
-            {
+            if (!array_key_exists('id', $data)) {
                 $this->addColumn('id', 1);    
             }
             
-            foreach($data as $name => $value)
-            {
+            foreach ($data as $name => $value) {
                 $this->addColumn($name, $value);
             }
             
             return $this;
         }
-        
-        $lastId = $this->lastId() + 1;
-            
-        $row = $this->_addRow();
-        
-        foreach($columns as $column)
-        {
-            if($column == 'id')
-            {
-                $row->addChild('id', $lastId); continue;
+
+        $row = $this->addRow();
+
+		$id = $this->lastId() + 1;
+
+        foreach ($columns as $column) {
+
+            if ($column == 'id') {
+                $row->addChild('id', $id); continue;
             }
             
             $value = isset($data[$column]) ? $data[$column] : '';
             $row->addChild($column, $value); 
+
         }
         
-        $this->_clear();
-        self::_clearCache();
-        
-        return $this->_save();    
+		return $this->clear()->save();
+   
     }
     
     
@@ -507,18 +463,18 @@ class xmlDb
     */
     public function getRow()
     {
-        return $this->_get(true);   
+        return $this->get(1);   
     }
     
     
     /**
     * get all rows
     * 
-    * @return array
+    * @return array object
     */
     public function getAll()
     {
-        return $this->_get(false);
+        return $this->get();
     }
          
     
@@ -527,35 +483,28 @@ class xmlDb
     *  
     * @param array $data
     */
-    public function update($data = array())
+    public function update($data = [])
     {        
-        if(false == empty($this->bind))
-        {
+        if (!empty($this->bind)) {
             $data = array_merge($this->bind, $data);
         }
         
-        $i = 1;
-        
-        foreach($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $row)
-        { 
-            foreach($row->children() as $column)
-            {
-                if(array_key_exists($column->getName(), $data))
-                {
+        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) { 
+
+            foreach ($row->children() as $column) {
+
+                if(array_key_exists($column->getName(), $data)) {
                     $dom = dom_import_simplexml($column);
                     $dom->nodeValue = $data[$column->getName()];  
                 }    
             }
             
-            if($i == $this->limit) break; $i++;
+            if ($i == $this->limit && $i > 0) break;
             
             $this->affected_rows++; 
         }
-        
-        $this->_clear(); 
-        self::_clearCache();
-        
-        return $this->_save();    
+
+		return $this->clear()->save();    
            
     }
     
@@ -566,22 +515,19 @@ class xmlDb
     */
     public function delete()
     {
-        $i = 1;
-               
-        foreach($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $row)
-        { 
+    
+        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) { 
+
             $node = dom_import_simplexml($row);
             $node->parentNode->removeChild($node);
             
-            if($i == $this->limit) break; $i++;
+            if($i == $this->limit && $i > 0) break;
             
             $this->affected_rows++; 
         }
-        
-        $this->_clear();
-        self::_clearCache(); 
-        
-        return $this->_save();    
+
+        return $this->clear()->save();
+    
     }
     
         
@@ -593,19 +539,10 @@ class xmlDb
     */
     public function orderBy($column, $order = 'asc')
     {
-        switch($order)
-        {
-            case 'desc':
-                
-                $order = SORT_DESC;
-                
-            break;
-            default:
-            
-                $order = SORT_ASC;
-        }
+
+		$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
         
-        $this->sort = array($column, $order);
+        $this->sort = [$column, $direction];
         
         return $this;   
     }
@@ -630,14 +567,22 @@ class xmlDb
     */
     public function lastId()
     {
-        $result = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
-        
-        if(isset($result[0]->id))
-        {
-            return intval($result[0]->id); 
+        $rows = $this->xml->xpath('//database/' . $this->table . '/row');
+
+		return count($rows) - 1;
+
+		/**
+		* row[last()] Not working, hm...
+
+		$row = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
+
+        if (isset($row[0]->id)) {
+            return $row[0]->id; 
         }
         
         return 1;   
+
+		*/
     }
     
     
@@ -655,76 +600,62 @@ class xmlDb
     
     /**
     * get result
-    * 
     */
-    private function _get($get_one)
+    private function get($results = 0)
     {               
-        $data    = array();
-        $columns = array();  
+        $data = $columns = [];  
   
-        // cache file
-        $cache_file = dirname(__FILE__) . '/data/' . md5($this->table . $this->join_table . $this->query . $this->limit) . '.cache';
-
-        if(file_exists($cache_file))
-        {
+  		// check cache
+        if (file_exists($cache_file = dirname(__FILE__) . '/data/' . md5($this->table . $this->join_table . $this->query . $this->limit) . '.cache')) {
             // load cache
             $data = unserialize(file_get_contents($cache_file));
-        }
-        else
-        {
-            // set limit for getRow()
-            if($get_one)
-            {
-                $this->limit = 1;
-            }
+
+        } else {
             
             // if we use join, get columns of join table
-            if(false == is_null($this->join_table))
-            {
+            if (!is_null($this->join_table)) {
                 $jtable_columns = $this->getColumns($this->join_table);    
             } 
             
-            $i = 1;
-            
-            foreach($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $row)
-            {
-                foreach($row->children() as $column)
-                {          
-                    if(in_array($column->getName(), $this->columns))
-                    {
+            foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) {
+
+                foreach ($row->children() as $column) {  
+        
+                    if (in_array($column->getName(), $this->columns)) {
+
                         // join
-                        if(false == is_null($this->join_table))
-                        {
-                            if($column->getName() == $this->primary_key)
-                            {
+                        if (!is_null($this->join_table)) {
+
+                            if ($column->getName() == $this->primary_key) {
+
                                 $jtable = $this->xml->xpath('//database/' . $this->join_table . '/row[' . $this->foreign_key . ' = ' . (string) $column . ']');
                                                                 
-                                if(false == empty($jtable))
-                                {
-                                    foreach($jtable[0] as $jcolumn)
-                                    {  
-                                        if(in_array($jcolumn->getName(), $this->columns))
-                                        {
+                                if (!empty($jtable)) {
+
+                                    foreach ($jtable[0] as $jcolumn) { 
+ 
+                                        if (in_array($jcolumn->getName(), $this->columns)) {
+
                                             if($jcolumn->getName() == 'id') continue;
 
                                             $columns[$jcolumn->getName()] = (string) $jcolumn;
                                         }                                  
                                     }
-                                }
-                                else
-                                {
+
+                                } else {
+
                                     // fill empty values
-                                    foreach($jtable_columns as $c)
-                                    {
-                                        if(in_array($c, $this->columns))
-                                        {
-                                            if($c == 'id') continue;
-            
-                                            $columns[$c] = ''; 
-                                        }    
+                                    foreach ($jtable_columns as $name) {
+
+                                        if (in_array($name, $this->columns)) {
+                                            if($name == 'id') continue;
+                                            $columns[$name] = ''; 
+                                        } 
+   
                                     }
                                     
                                 } 
+
                             }               
                         }
                         
@@ -736,7 +667,7 @@ class xmlDb
                 $data[] = (object) $columns;
                 
                 // check limit
-                if($i == $this->limit) break; $i++;
+                if($i == $this->limit && $i > 0) break;
             }  
             
             // save cache
@@ -744,26 +675,21 @@ class xmlDb
         }
         
         // sort result
-        if(is_array($this->sort))
-        {
-            list($column, $sort) = $this->sort;
-            
-            $data = $this->_sortBy($data, $column, $sort);           
+        if (!empty($this->sort)) {
+            $data = $this->sortArray($data, $this->sort[0], $this->sort[1]);           
         }  
         
-        $this->_clear();  
-        
         // if there is no results return false
-        if(0 == count($data)) 
-        {
+        if(count($data) == 0) {
             return false;
         }
         
         // return one row
-        if($get_one)
-        {
+        if ($results == 1) {
             return $data[0];
         }
+
+		$this->clear();  
         
         // return all rows
         return $data;
@@ -773,9 +699,8 @@ class xmlDb
 
     /**
     * add row to table
-    * 
     */
-    private function _addRow()
+    private function addRow()
     {
         $table = $this->xml->xpath('//database/' . $this->table);
         return $table[0]->addChild('row');    
@@ -783,29 +708,31 @@ class xmlDb
     
     
     /**
-    * save document
-    * 
+    * save xml document
     */
-    private function _save()
-    {
-        return $this->xml->asXML($this->file);   
+    private function save()
+    {        
+		static::clearCache();
+        return $this->xml->asXML($this->db);   
     }
     
     
     /**
     * clear data
-    * 
     */
-    private function _clear()
+    private function clear()
     {
-        $this->table       = null;
-        $this->query       = null;
-        $this->limit       = 0;
-        $this->sort        = null;
-        $this->join_table  = null;
-        $this->primary_key = null;
-        $this->foreign_key = null;
-        $this->bind        = array();
+		$this->table         = null;
+	    $this->query         = null;
+	    $this->bind          = [];
+		$this->columns       = [];
+	    $this->sort          = [];
+	    $this->join_table    = null;
+	    $this->primary_key   = null;
+	    $this->foreign_key   = null;
+		$this->limit         = 0;
+
+		return $this;
     }
     
     
@@ -816,20 +743,17 @@ class xmlDb
     * @param string $column
     * @param string $dir
     */
-    private function _sortBy($data, $column, $dir)
+    private function sortArray($data, $column, $dir)
     {  
-        $sort = array();
+        $sort = [];
         
-        foreach($data as $key => $row) 
-        {
-            if(isset($row->$column))
-            {
+        foreach ($data as $key => $row) {
+            if (isset($row->$column)) {
                 $sort[$key] = $row->$column;
             }
         }
 
-        if(false == empty($sort))
-        {
+        if (!empty($sort)) {
             array_multisort($sort, $dir, $data);    
         }
 
@@ -838,13 +762,11 @@ class xmlDb
     
     /**
     * delete cache files
-    * 
     */
-    private static function _clearCache()
-    {
-        foreach(glob(dirname(__FILE__) . '/data/*.cache') as $file)
-        {
-            unlink($file);
-        }
-    }
+	public static function clearCache()
+	{
+		foreach (glob(dirname(__FILE__) . '/data/*.cache') as $file) {
+			unlink($file);
+		}
+	}
 }
