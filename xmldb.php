@@ -21,7 +21,7 @@ class xmlDb
 	* 
 	* @var boolean
 	*/
-	public  $cache         = false;
+	public  $cache         = true;
 
 	private $db            = null;
 	private $fh            = null;
