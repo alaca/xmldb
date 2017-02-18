@@ -79,9 +79,6 @@ XML Db is PHP library which uses XML files for storing and organizing data aka f
 
 #### Connect to database	
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 $db = xmlDb::connect('database');
 ```
 If database file not exists it will be created automatically. Database files are stored in *data* directory.
@@ -109,8 +106,6 @@ echo 'Database file permissions: ' . xmlDb::getDatabasePerms('database');
 
 #### Create database backup
 ```php
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -122,8 +117,6 @@ Backup files are stored in data directory with extension *.bak*
 
 #### Restore database backup
 ```php
-require 'database/xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -134,8 +127,6 @@ $db->restore();
 
 #### Add table to database
 ```php
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -150,9 +141,6 @@ $db->addTable('one_more_table');
 
 #### Remove table from database       
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -163,9 +151,6 @@ $db->removeTable('another_table');
 
 #### Get tables names
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -180,9 +165,6 @@ getTables() returns an array of table names
 
 #### Add table column
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -208,9 +190,6 @@ Better way for adding columns in newly created table is by using method [insert(
 
 #### Remove table column       
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -221,9 +200,6 @@ $db->from('example_table')->removeColumn('name');
 
 #### Get columns names       
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -244,9 +220,6 @@ getColumns() returns an array of columns names
 
 #### Insert data
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -288,9 +261,6 @@ Notice that we aren't set the column id. Column id is added and incremented auto
 
 #### Update data     
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -341,9 +311,6 @@ echo 'Rows updated: ' . $db->affectedRows();
 
 #### Delete data
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -369,9 +336,6 @@ echo 'Rows deleted: ' . $db->affectedRows();
 
 #### Get one row
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -392,9 +356,6 @@ getRow() returns an object with column names as properties, if there is no data 
 
 #### Get all rows
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -463,9 +424,6 @@ Let's say we have two relational tables (users and users_data) in one database
 
 Getting the data
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // conect to xmlDb
 $db = xmlDb::connect('database');
 
@@ -494,9 +452,6 @@ echo $user->lastname;
 
 #### Select columns
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -510,9 +465,6 @@ $db->table('example_table')->select('id, name, lastname');
 
 #### Where 
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -528,9 +480,6 @@ print_r($data);
 
 #### Or where 
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -548,9 +497,6 @@ print_r($data);
         
 #### Limit result    
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -583,9 +529,6 @@ echo 'Rows deleted: ' . $xmlDb->affectedRows();
 
 #### Affected rows
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -601,9 +544,6 @@ affectedRows() is used with method update() and method delete() to get number of
 
 #### Bind
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -617,9 +557,6 @@ $db->in('example_table')
  
 #### Order by     
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
@@ -645,9 +582,6 @@ print_r($data);
 
 #### Last insert id
 ```php
-// include xmlDb class
-require 'xmldb.php';
-
 // connect to database 
 $db = xmlDb::connect('database');
 
