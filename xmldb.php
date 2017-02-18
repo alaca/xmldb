@@ -15,7 +15,7 @@ class xmlDb
 	* @var array
 	*/
 	private static $instance = [];
-	
+
 	/**
 	* cache queries
 	* 
@@ -37,8 +37,8 @@ class xmlDb
 	private $foreign_key   = null;
 	private $limit         = 0;
 	private $affected_rows = 0;
-    
-    
+
+
     /**
     * constructor
     */
