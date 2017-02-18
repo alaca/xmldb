@@ -1,5 +1,31 @@
 # PHP XML DATABASE - XMLDB
 
+###Db schema
+```html
+<?xml version="1.0" encoding="utf-8"?>
+<database>
+	<table_name>
+		<row>
+			<id>1</id>
+			<name>Name</name>
+			<email>email@gmail.com</email>
+		</row>
+		<row>
+			<id>2</id>
+			<name>Name 2</name>
+			<email>email2@gmail.com</email>
+		</row>
+	</table_name>
+	<another_table>
+		<row>
+			<id>1</id>
+			<column>Column</column>
+			<column2>Column2</column2>
+		</row>
+	</another_table>
+</database>
+```
+
 ###Connect 
 ```php
 // include library
