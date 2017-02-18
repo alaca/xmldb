@@ -1,4 +1,4 @@
-# PHP XML DB
+# PHP XML Database
 
 ## Table of Contents
 
