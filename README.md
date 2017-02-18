@@ -26,7 +26,7 @@ print_r($tables);
 ###Remove table
 ```php
 // remove table from database
-$db->removeTable('another_table');
+$db->removefrom('another_table');
 ```
 
 
@@ -39,14 +39,14 @@ print_r($tables);
 
 ###Add column
 ```php
-$db->table('example_table')->addColumn('id', 1);
-$db->table('example_table')->addColumn('name', 'John');
-$db->table('example_table')->addColumn('lastname', 'Doe');
+$db->in('example_table')->addColumn('id', 1);
+$db->in('example_table')->addColumn('name', 'John');
+$db->in('example_table')->addColumn('lastname', 'Doe');
 ```
 
 ###Get column
 ```php
-$columns = $db->table('example_table')->getColumns();
+$columns = $db->from('example_table')->getColumns();
 // or
 $columns = $db->getColumns('example_table');
 ```
@@ -55,7 +55,7 @@ $columns = $db->getColumns('example_table');
 
 ###Remove column from table
 ```php
-$db->table('example_table')->removeColumn('lastname');
+$db->from('example_table')->removeColumn('lastname');
 ```
 
 ### Insert data into database
@@ -65,12 +65,12 @@ $data = [
     'lastname' => 'My last name',
 ];
 
-$db->table('example_table')->insert($data);
+$db->in('example_table')->insert($data);
 
 
 // or
 
-$db->table('example_table')
+$db->in('example_table')
    ->bind('name', 'My name 2') 
    ->bind('lastname', 'My last name 2')
    ->insert();
@@ -81,7 +81,7 @@ $db->table('example_table')
 ###Get data from database
 ```php
 // getRow() returns object with column names as properties, if there is no data returns false 
-$db->table('example_table')->select('id, name')->getRow();
+$db->from('example_table')->select('id, name')->getRow();
 
 // print data
 echo 'id: ' . $row->id;
@@ -89,7 +89,7 @@ echo 'name: ' . $row->name;
 
 
 // getAll() returns an array of objects, if there is no data returns false 
-$rows = $db->table('example_table')->select('id, name')->getAll();
+$rows = $db->from('example_table')->select('id, name')->getAll();
 
 // print data
 foreach ($rows as $row) {
@@ -98,11 +98,25 @@ foreach ($rows as $row) {
 }
 
 
+// short
+$rows = $db->from('example_table')->getAll();
+
+
+// where
+$rows = $db->from('example_table')->where('name', 'John')->getAll();
+
+$rows = $db->from('example_table')->where('id', 10, '>')->getAll();
+
+// or where
+$rows = $db->from('example_table')->where('name', 'John')->orWhere('name', 'Johnny')->getAll();
+
+// contains
+$rows = $db->from('example_table')->where('name', 'Joh', 'contains')->getAll();
 
 
 // join tables
-$db->table('users')
-   ->join('users_table' ,'id', 'user_id') //join() method must come immediately after table() method
+$db->from('users')
+   ->join('users_table' ,'id', 'user_id') //join() method must come immediately after from() method
    ->select('*');
 // this will combine data from two tables where column "id" of "users" table
 // euqals to column "user_id" of "users_data" table
@@ -113,10 +127,10 @@ print_r($data);
 
 // using where()
 
-$db->table('users')
+$db->from('users')
    ->join('users_table' ,'id', 'user_id')
    ->select('id, name, lastname')
-   ->where('id = 2'); // where "users" table "id" = 2
+   ->where('id', 2); // where "users" table "id" = 2
 
 $user = $db->getRow();
 ```
@@ -129,16 +143,16 @@ $data = [
 	'lastname' => 'My last name updated',
 ];
 
-$db->table('example_table')
-   ->where('name = "My name"') 
+$db->in('example_table')
+   ->where('name', 'My name') 
    ->update($data);
 
 // print num rows updated
 echo 'Rows updated: ' . $db->affectedRows() . '<br />';
 
 // another way of updating data
-$db->table('example_table')
-   ->where('name = "My name updated"')
+$db->in('example_table')
+   ->where('name', 'My name updated')
    ->bind('name', 'My name updtaed again') 
    ->bind('lastname', 'My last name updated again')
    ->update();
@@ -150,15 +164,15 @@ echo 'Rows updated: ' . $db->affectedRows() . '<br />';
 
 ###Delete data
 ```php
-$xmlDb->table('example_table')
-      ->where('name = "My name updtaed again"')
+$xmlDb->from('example_table')
+      ->where('name', 'My name updtaed again')
       ->delete();
 
 
 
 // we can limt delete by calling method limit()
-$xmlDb->table('example_table')
-      ->where('id > 3')
+$xmlDb->from('example_table')
+      ->where('id', 3, '>')
       ->limit(5)
       ->delete();
 
