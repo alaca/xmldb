@@ -1,6 +1,20 @@
-# PHP XML DATABASE - XMLDB
+# PHP XML DB
 
-###Db schema
+## Table of Contents
+
+* [Introduction](#introduction)
+* [Database structure](#database-structure)
+* [API](#api)
+* [Usage](#usage)
+
+
+### Introduction
+
+XML Db is PHP library which uses XML files for storing and organizing data aka flat-file database . Xml Db supports basic CRUD operations.
+
+
+### Database structure
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <database>
@@ -24,128 +38,440 @@
 		</row>
 	</another_table>
 </database>
+```    
+
+
+
+### API
+
+* [xmlDb::connect($database)](#connect-to-database)
+* [xmlDb::deleteDatabase($database)](#delete-database)
+* [xmlDb::chmodDatabase($database, $permissions)](#chmod-database-file)
+* [xmlDb::getDatabasePerms($database)](#get-database-permissions)
+* [backup()](#create-database-backup)
+* [restore()](#restore-database-backup)
+* [addTable($name)](#add-table-to-database)
+* [removeTable($name)](#remove-table-from-database)
+* [getTables()](#get-tables-names)
+* [addColumn($name, $value)](#add-table-column)
+* [removeColumn($name)](#remove-table-column)
+* [getColumns($table)](#get-columns-names)
+* [insert($data)](#insert-data)
+* [update($data)](#update-data)
+* [delete()](#delete-data)
+* [getRow()](#get-one-row)
+* [getAll()](#get-all-rows)
+* [from($table)](#from)
+* [in($table)](#in)
+* [join($table, $primary_key, $foreign_key)](#join)
+* [select($columns)](#select-columns)
+* [where($column, $value, $comparison_operator)](#where)
+* [orWhere($column, $value, $comparison_operator)](#or-where)
+* [limit($num)](#limit-result)
+* [affectedRows()](#affected-rows)
+* [bind($placholder, $value)](#bind)
+* [orderBy($column, $direction)](#order-by)
+* [lastId()](#last-insert-id)
+
+
+
+### Usage
+
+#### Connect to database	
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+$db = xmlDb::connect('database');
+```
+If database file not exists it will be created automatically. Database files are stored in *data* directory.
+
+
+#### Delete database
+```php
+xmlDb::deleteDatabase('database');
+```
+Delete the database file from data directory.
+
+
+#### Chmod database file
+```php
+xmlDb::chmodDatabase('database', 0755);
+```
+Change database file permissions. Default permissions are set to 0644. 
+
+
+#### Get database permissions
+```php      
+echo 'Database file permissions: ' . xmlDb::getDatabasePerms('database');
 ```
 
-###Connect 
-```php
-// include library
-include 'xmldb.php';
 
-// connect to db
-$db = xmlDb::connect('example_database');
+#### Create database backup
+```php
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// create backup
+$db->backup();
+```
+Backup files are stored in data directory with extension *.bak*
+
+
+#### Restore database backup
+```php
+require 'database/xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// restore database backup
+$db->restore();
 ```
 
-###Add table 
+
+#### Add table to database
 ```php
-// add table to database
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// add table
 $db->addTable('example_table');
 
+// we can have unlimited number of tables in one database
 $db->addTable('another_table');
+$db->addTable('one_more_table');
+```
+        
 
-// getTables() returns an array of table names
+#### Remove table from database       
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// remove table and all its contents
+$db->removeTable('another_table');
+```
+        
+
+#### Get tables names
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// get tables names
 $tables = $db->getTables();
 
-// print tables names
+// print table names
 print_r($tables);
 ```
+getTables() returns an array of table names
 
-###Remove table
+
+#### Add table column
 ```php
-// remove table from database
-$db->removefrom('another_table');
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// add table
+$db->addTable('example_table');
+
+// for doing anything with table (adding columns, removing columns, selecting data) 
+// first we must select table by calling method from(table_name) or method in(table_name)
+
+// add column "id" and set its value to 1
+$db->table('example_table')->addColumn('id', 1);
+
+// add first name and last name columns
+$db->table('example_table')->addColumn('firstname', 'John');
+$db->table('example_table')->addColumn('lastname', 'Doe');
 ```
+addColumn() method is useful for extending the table structure, and it can be used when creating a new table for adding columns. <br />
+If you add columns in newly created table on this way, *column id must be set.*
+
+Better way for adding columns in newly created table is by using method [insert()](#insert-data)
 
 
-###Get tables
+
+#### Remove table column       
 ```php
-$tables = $db->getTables();
-// print tables
-print_r($tables);
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// remove column
+$db->from('example_table')->removeColumn('name');
 ```
+ 
 
-###Add column
+#### Get columns names       
 ```php
-$db->in('example_table')->addColumn('id', 1);
-$db->in('example_table')->addColumn('name', 'John');
-$db->in('example_table')->addColumn('lastname', 'Doe');
-```
+// include xmlDb class
+require 'xmldb.php';
 
-###Get column
-```php
+// connect to database 
+$db = xmlDb::connect('database');
+
+// you can get columns names like this
 $columns = $db->from('example_table')->getColumns();
-// or
+
+// print columns
+print_r($columns);
+
+// or like this
 $columns = $db->getColumns('example_table');
+
+print_r($columns);
 ```
+getColumns() returns an array of columns names
 
 
 
-###Remove column from table
+#### Insert data
 ```php
-$db->from('example_table')->removeColumn('lastname');
-```
+// include xmlDb class
+require 'xmldb.php';
 
-### Insert data into database
-```php
+// connect to database 
+$db = xmlDb::connect('database');
+
+// you can insert data in two different ways
+
+// by passing an array with column names and their values
+$db->in('example_table')->insert([
+	'name'     => 'John',
+	'lastname' => 'Doe'
+]);
+
+
+// or by using method bind(column_name, value)
+$db->in('example_table')
+   ->bind('name', 'John') 
+   ->bind('lastname', 'Doe')
+   ->insert();
+
+
+// example how to create a new table and insert data
+
+// create table
+$db->addTable('user_data');   
+
+// set data
 $data = [
-    'name'     => 'My name',
-    'lastname' => 'My last name',
+    'username' => 'my_user_name',
+    'password' => md5('password'),
+    'email'    => 'demo@example.com',
 ];
 
-$db->in('example_table')->insert($data);
+// insert data into table
+$db->in('user_data')->insert($data);   
+```
+If the table where you want to insert data doesn't have any columns (newly created table), columns will be automatically added.
+Notice that we aren't set the column id. Column id is added and incremented automatically.
 
 
-// or
 
+#### Update data     
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// like insert() method, update() method also supports two different ways of updating data
+
+// by passing an array with column names and their values
+$data = [
+    'name'     => 'My name',
+    'lastname' => 'My last name'
+];
+
+$db->in('example_table')->update($data);
+
+// or by using method bind(column_name, value)
 $db->in('example_table')
-   ->bind('name', 'My name 2') 
-   ->bind('lastname', 'My last name 2')
-   ->insert();
+   ->bind('name', 'Johnny') 
+   ->bind('lastname', 'Test')
+   ->update();
+   
+
+// using where()
+
+$db->from('example_table')
+   ->where('name', 'Johnny')
+   ->bind('lastname', 'Doe')
+   ->update();
+
+// update column name in all rows where id is greater than 5 and less than 10
+$db->in('example_table')
+   ->where('id', 5, '>')
+   ->where('id', 10, '<')
+   ->bind('name', 'John')
+   ->update();
+     
+   
+// limiting update
+$db->in('example_table')
+   ->where('id', 3, '>')
+   ->bind('name', 'Jane')
+   ->limit(5)
+   ->update();
+   
+
+// check how many rows is actually updated
+echo 'Rows updated: ' . $db->affectedRows();
 ```
 
 
-
-###Get data from database
+#### Delete data
 ```php
-// getRow() returns object with column names as properties, if there is no data returns false 
-$db->from('example_table')->select('id, name')->getRow();
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// this will delete all rows in table "example_table"
+$db->from('example_table')->delete();
+
+
+// using where()
+
+// delete all rows where column "name" equal to "John" 
+$db->in('example_table')->where('name', 'John')->delete();
+   
+   
+// limiting delete
+$db->in('example_table')
+   ->where('id', 3, '>')
+   ->limit(5)
+   ->delete();
+
+echo 'Rows deleted: ' . $db->affectedRows();
+```
+
+
+#### Get one row
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// select table and columns
+$db->from('example_table')->select('id, name, lastname');
+
+// get row
+$row = $db->getRow();
 
 // print data
-echo 'id: ' . $row->id;
-echo 'name: ' . $row->name;
+echo $row->id . '<br />';
+echo $row->name . '<br />';
+echo $row->lastname . '<br />';
+```
+getRow() returns an object with column names as properties, if there is no data returns false
 
 
-// getAll() returns an array of objects, if there is no data returns false 
-$rows = $db->from('example_table')->select('id, name')->getAll();
+
+#### Get all rows
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// select table and columns
+$db->from('example_table')->select('id, name, lastname');
+
+// get all rows
+$rows = $db->getAll();
 
 // print data
 foreach ($rows as $row) {
-    echo 'id: ' .$row->id;
-    echo 'name: ' . $row->name . '<br />';
+    echo $row->id . '<br />';
+    echo $row->name . '<br />';
+    echo $row->lastname . '<br />';
 }
+```
+getAll() returns an array of objects, if there is no data returns false
 
 
-// short
-$rows = $db->from('example_table')->getAll();
+
+#### From
+```php
+// select table to operate
+$db->from('example_table');
+```
 
 
-// where
-$rows = $db->from('example_table')->where('name', 'John')->getAll();
+#### In
+```php
+// in is alias of from()
+$db->in('example_table');
+```
+        
+        
 
-$rows = $db->from('example_table')->where('id', 10, '>')->getAll();
+#### Join
+        
+Let's say we have two relational tables (users and users_data) in one database
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<database>
+	<users>
+		<row>
+			<id>1</id>
+			<name>John</name>
+		</row>
+		<row>
+			<id>2</id>
+			<name>Jane</name>
+		</row>
+	</users>
+	<users_data>
+		<row>
+			<id>1</id>
+			<user_id>1</user_id>
+			<lastname>Doe</lastname>
+		</row>
+		<row>
+			<id>2</id>
+			<user_id>2</user_id>
+			<lastname>Dooe</lastname>
+		</row>
+	</users_data>
+</database>
+```
 
-// or where
-$rows = $db->from('example_table')->where('name', 'John')->orWhere('name', 'Johnny')->getAll();
+Getting the data
+```php
+// include xmlDb class
+require 'xmldb.php';
 
-// contains
-$rows = $db->from('example_table')->where('name', 'Joh', 'contains')->getAll();
-
+// conect to xmlDb
+$db = xmlDb::connect('database');
 
 // join tables
-$db->from('users')
-   ->join('users_table' ,'id', 'user_id') //join() method must come immediately after from() method
-   ->select('*');
-// this will combine data from two tables where column "id" of "users" table
-// euqals to column "user_id" of "users_data" table
+$db->from('users')->join('users_table' ,'id', 'user_id')->select('*');
+// this will combine data from two tables where column "id" of "users" table euqals to column "user_id" of "users_data" table
 
 $data = $db->getAll();
 
@@ -156,51 +482,177 @@ print_r($data);
 $db->from('users')
    ->join('users_table' ,'id', 'user_id')
    ->select('id, name, lastname')
-   ->where('id', 2); // where "users" table "id" = 2
+   ->where('id', 2); // where "users" table "id" euqal 2
 
 $user = $db->getRow();
+
+echo $user->id . '<br />';
+echo $user->name . '<br />';
+echo $user->lastname;
+```
+        
+
+#### Select columns
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// select all columns by using asterisk "*"
+$db->table('example_table')->select('*');
+
+// select columns we need by providing their names separated by comma
+$db->table('example_table')->select('id, name, lastname');
+```
+     
+
+#### Where 
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+$db->from('users')
+   ->select('id, name, lastname')
+   ->where('name', 'John');
+   ->where('lastname', 'Doe');
+
+$data = $db->getAll();
+
+print_r($data);
 ```
 
-
-###Update data
+#### Or where 
 ```php
-$data = [
-	'name'     => 'My name updated',
-	'lastname' => 'My last name updated',
-];
+// include xmlDb class
+require 'xmldb.php';
 
-$db->in('example_table')
-   ->where('name', 'My name') 
-   ->update($data);
+// connect to database 
+$db = xmlDb::connect('database');
 
-// print num rows updated
-echo 'Rows updated: ' . $db->affectedRows() . '<br />';
+// select id, name, lastname from users where name = John or name = Johnny
+$db->from('users')
+   ->select('id, name, lastname')
+   ->where('name', 'John');
+   ->orWhere('name', 'Johnny');
 
-// another way of updating data
-$db->in('example_table')
-   ->where('name', 'My name updated')
-   ->bind('name', 'My name updtaed again') 
-   ->bind('lastname', 'My last name updated again')
-   ->update();
+$data = $db->getAll();
 
-echo 'Rows updated: ' . $db->affectedRows() . '<br />';
+print_r($data);
 ```
 
-
-
-###Delete data
+        
+#### Limit result    
 ```php
-$xmlDb->from('example_table')
-      ->where('name', 'My name updtaed again')
-      ->delete();
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// limit result
+$db->from('users')->select('*')->limit(10);
+
+$data = $db->getAll();
+
+echo 'Rows selected: ' . count($data);
 
 
+// limit update
+$db->in('users')->where('id', 3, '>')->limit(5)->update([
+	'name' => 'Johnny'	
+]);
+   
+echo 'Rows updated: ' . $db->affectedRows();
 
-// we can limt delete by calling method limit()
-$xmlDb->from('example_table')
-      ->where('id', 3, '>')
-      ->limit(5)
-      ->delete();
 
+// limit delete
+$db->in('example_table')
+   ->where('id', 3, '>')
+   ->limit(5)
+   ->delete();
+   
 echo 'Rows deleted: ' . $xmlDb->affectedRows();
+```
+
+
+
+#### Affected rows
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+$db->in('users')->where('id', 3)->update([
+	'name' => 'Johnny'
+]);
+   
+echo 'Rows updated: ' . $db->affectedRows();
+```
+affectedRows() is used with method update() and method delete() to get number of rows updated/deleted
+
+
+
+#### Bind
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// binding column names and their values
+$db->in('example_table')
+   ->bind('name', 'John')
+   ->bind('lastname', 'Doe')
+   ->insert();
+```
+        
+ 
+#### Order by     
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// orderBy() method takes two params, column name and direction of sorting (asc or desc)
+$db->from('example_table')->select('id, name, lastname')->orderBy('name', 'asc');
+   
+$data = $db->getAll();
+
+print_r($data);
+
+
+$db->from('example_table')
+   ->select('id, name, lastname')
+   ->where('id', 5, '>')
+   ->limit(5)
+   ->orderBy('id', 'desc');
+   
+$data = $db->getAll();
+
+print_r($data);
+```
+        
+
+#### Last insert id
+```php
+// include xmlDb class
+require 'xmldb.php';
+
+// connect to database 
+$db = xmlDb::connect('database');
+
+// select table
+$db->in('example_table');
+
+echo 'Last inserted id is ' . $db->lastId();
 ```
