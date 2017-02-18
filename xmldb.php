@@ -8,7 +8,20 @@
  */
 class xmlDb
 {
+
+	/**
+	* xmlDb instances
+	* 
+	* @var array
+	*/
 	private static $instance = [];
+	
+	/**
+	* cache queries
+	* 
+	* @var boolean
+	*/
+	public  $cache         = false;
 
 	private $db            = null;
 	private $fh            = null;
@@ -96,6 +109,7 @@ class xmlDb
     * connect to database
     * 
     * @param string $database
+    * @return xmlDb
     */
     public static function connect($database)
     {
@@ -110,6 +124,7 @@ class xmlDb
     /**
     * create database backup
     * 
+    * @return xmlDb
     */
     public function backup()
     {
@@ -123,7 +138,8 @@ class xmlDb
     
     /**
     * restore database backup
-    * 
+	* 
+    * @return xmlDb
     */
     public function restore()
     {
@@ -159,7 +175,7 @@ class xmlDb
     
     
     /**
-    * change permissions of database file
+    * chmod database file
     * 
     * @param string $database
     * @param int $permissions
@@ -178,6 +194,7 @@ class xmlDb
     * get permissions of database file 
     * 
     * @param string $database
+	* @return float
     */
     public static function getDatabasePerms($database)
     {
@@ -186,15 +203,17 @@ class xmlDb
     
     
     /**
-    * add table
+    * add table to database
     * 
     * @param string $name
     */
     public function addTable($name)
     {     
-        if (empty($table = $this->xml->xpath($name))) {
+		$table = $this->xml->xpath($name);
+        
+		if (empty($table)) {
 
-            $table = $this->xml->addChild($name)->addChild('row');
+            $this->xml->addChild($name)->addChild('row');
 
             return $this->save();     
         }           
@@ -202,7 +221,7 @@ class xmlDb
     
     
     /**
-    * remove table
+    * remove table from database
     * 
     * @param string $name
     */
@@ -219,7 +238,8 @@ class xmlDb
     
     /**
     * get database tables
-    * 
+	* 
+    * @return array $tables
     */
     public function getTables()
     {
@@ -268,11 +288,11 @@ class xmlDb
     }
     
     
-    /**
-    * remove column
-    * 
-    * @param string $name
-    */
+	/**
+	* remove column from table
+	* 
+	* @param string $name
+	*/
     public function removeColumn($name)
     {  
         $table = $this->table;
@@ -286,15 +306,15 @@ class xmlDb
         }
                 
         return $this->save();
-          
     }
     
     
-    /**
-    * get columns
-    * 
-    * @param string $table
-    */
+	/**
+	* get table columns
+	* 
+	* @param string $table
+	* @return array	$columns 
+	*/
     public function getColumns($table = null)
     {
 
@@ -316,17 +336,30 @@ class xmlDb
     }
     
     
-    /**
-    * select table
-    * 
-    * @param string $table
-    */
-    public function table($table)
+	/**
+	* select table
+	* 
+	* @param string $table
+	* @return xmlDb
+	*/
+    public function from($table)
     {
         $this->table = trim($table);
         
         return $this;  
     }
+	
+	
+	/**
+	* from() alias;
+	* 
+	* @param string $table
+	* @return xmlDb
+	*/
+	public function in($table)
+	{
+		return $this->from($table);
+	}
     
     
     /**
@@ -335,6 +368,7 @@ class xmlDb
     * @param string $table
     * @param string $primary_key
     * @param string $foreign_key
+	* @return xmlDb 
     */
     public function join($table, $primary_key, $foreign_key)
     {
@@ -350,10 +384,11 @@ class xmlDb
     
     
     /**
-    * select columns
-    * 
-    * @param string $columns
-    */
+	* selct columns
+	* 
+	* @param string $select
+	* @return xmlDb
+	*/
     public function select($select)
     {
 		$select = trim($select);
@@ -383,17 +418,73 @@ class xmlDb
     }
     
     
-    /**
-    * set xpath query
-    *  
-    * @param string $query
-    */
-    public function where($query)
+	/**
+	* xpath query
+	* 
+	* @param string $column
+	* @param string $value
+	* @param string $comparison_operator
+	* @param string $logical_operator
+	* @return xmlDb
+	*/
+    public function where($column, $value, $comparison_operator = '=', $logical_operator = 'and')
     {
-        $this->query = '[' . $query . ']';
+		
+		switch (strtolower($comparison_operator)) {
+
+			case 'contains':
+
+				/**
+				* to-do: case insensitive
+				*/
+				
+				$comparison_operator = is_null($this->query) ? '' : $logical_operator;
+
+				$this->query .= sprintf('%s contains(%s, "%s")', $comparison_operator, $column, $value);
+			
+				break;
+
+			default:
+			
+				if(!is_null($this->query)) {		
+					$column = " {$logical_operator} " . $column;
+				}
+				
+				$this->query .= sprintf('%s %s "%s"', $column, $comparison_operator, $value);
+				
+		}
          
         return $this;   
     }
+	
+	/**
+	* or xpath query
+	* 
+	* @param string $column
+	* @param string $value
+	* @param string $comparison_operator
+	* @return xmlDb
+	*/
+	public function orWhere($column, $value, $comparison_operator = '=')
+    {
+		if (is_null($this->query)) {
+			
+			trigger_error('Where clause missing');
+			
+		}
+
+		return $this->where($column, $value, $comparison_operator, ' or');
+
+    }
+	
+	/**
+	* get xpath query
+	* 
+	*/
+	public function getQuery()
+	{
+		return is_null($this->query) ? '' : '[' . $this->query . ']';
+	}
     
     
     /**
@@ -401,6 +492,7 @@ class xmlDb
     * 
     * @param string $name
     * @param string $value
+	* @return xmlDb
     */
     public function bind($name, $value)
     {
@@ -444,12 +536,10 @@ class xmlDb
 
         $row = $this->addRow();
 
-		$id = $this->lastId() + 1;
-
         foreach ($columns as $column) {
 
             if ($column == 'id') {
-                $row->addChild('id', $id); continue;
+                $row->addChild('id', $this->lastId() + 1); continue;
             }
             
             $value = isset($data[$column]) ? $data[$column] : '';
@@ -476,134 +566,14 @@ class xmlDb
     /**
     * get all rows
     * 
-    * @return array object
+    * @return object array
     */
     public function getAll()
     {
         return $this->get();
     }
-         
-    
-    /**
-    * update rows
-    *  
-    * @param array $data
-    */
-    public function update($data = [])
-    {        
-        if (!empty($this->bind)) {
-            $data = array_merge($this->bind, $data);
-        }
-        
-        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) { 
-
-            foreach ($row->children() as $column) {
-
-                if(array_key_exists($column->getName(), $data)) {
-                    $dom = dom_import_simplexml($column);
-                    $dom->nodeValue = $data[$column->getName()];  
-                }    
-            }
-            
-            if ($i == $this->limit && $i > 0) break;
-            
-            $this->affected_rows++; 
-        }
-
-		return $this->clear()->save();    
-           
-    }
-    
-    
-    /**
-    * delete rows
-    * 
-    */
-    public function delete()
-    {
-    
-        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) { 
-
-            $node = dom_import_simplexml($row);
-            $node->parentNode->removeChild($node);
-            
-            if($i == $this->limit && $i > 0) break;
-            
-            $this->affected_rows++; 
-        }
-
-        return $this->clear()->save();
-    
-    }
-    
-        
-    /**
-    * order by column asc or desc
-    * 
-    * @param string $column
-    * @param string $order
-    */
-    public function orderBy($column, $order = 'asc')
-    {
-
-		$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
-        $this->sort = [$column, $direction];
-        
-        return $this;   
-    }
-    
-    
-    /**
-    * limit result
-    * 
-    * @param int $rows
-    */
-    public function limit($limit)
-    {
-        $this->limit = intval($limit);
-
-        return $this; 
-    }
-    
-    
-    /**
-    * get last insert id 
-    * 
-    */
-    public function lastId()
-    {
-        $rows = $this->xml->xpath('//database/' . $this->table . '/row');
-
-		return count($rows) - 1;
-
-		/**
-		* row[last()] Not working, hm...
-
-		$row = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
-
-        if (isset($row[0]->id)) {
-            return $row[0]->id; 
-        }
-        
-        return 1;   
-
-		*/
-    }
-    
-    
-    /**
-    * get num of updated or deleted rows
-    * 
-    */
-    public function affectedRows()
-    {
-        $num = $this->affected_rows;
-        $this->affected_rows = 0;
-        
-        return $num;
-    }
-    
-    /**
+	
+	/**
     * get result
     */
     private function get($results = 0)
@@ -611,19 +581,24 @@ class xmlDb
         $data = $columns = [];  
   
   		// check cache
-        if (file_exists($cache_file = dirname(__FILE__) . '/data/' . md5($this->table . $this->join_table . $this->query . $this->limit) . '.cache')) {
+        if (file_exists($cache_file = dirname(__FILE__) . '/data/' . md5($this->table . $this->join_table . $this->query . $this->limit) . '.cache') && $this->cache) {
             // load cache
             $data = unserialize(file_get_contents($cache_file));
 
         } else {
+			
+			// if columns are not set explicitly, get them all
+            if (empty($this->columns)) {
+                $this->columns = $this->getColumns($this->table);    
+            } 
             
             // if we use join, get columns of join table
             if (!is_null($this->join_table)) {
                 $jtable_columns = $this->getColumns($this->join_table);    
             } 
             
-            foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->query) as $i => $row) {
-
+            foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->getQuery()) as $i => $row) {
+				
                 foreach ($row->children() as $column) {  
         
                     if (in_array($column->getName(), $this->columns)) {
@@ -672,11 +647,13 @@ class xmlDb
                 $data[] = (object) $columns;
                 
                 // check limit
-                if($i == $this->limit && $i > 0) break;
+                if(++$i == $this->limit && $i > 0) break;
             }  
             
             // save cache
-            file_put_contents($cache_file, serialize($data));  
+			if ($this->cache) {
+				file_put_contents($cache_file, serialize($data));  
+			}
         }
         
         // sort result
@@ -700,10 +677,133 @@ class xmlDb
         return $data;
             
     }
+         
+    
+    /**
+    * update rows
+    *  
+    * @param array $data
+    */
+    public function update($data = [])
+    {        
+        if (!empty($this->bind)) {
+            $data = array_merge($this->bind, $data);
+        }
+        
+        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->getQuery()) as $i => $row) {
+
+            foreach ($row->children() as $column) {
+
+                if(array_key_exists($column->getName(), $data)) {
+                    $dom = dom_import_simplexml($column);
+                    $dom->nodeValue = $data[$column->getName()];  
+                }    
+            }
+            
+            if (++$i == $this->limit && $i > 0) break;
+            
+            $this->affected_rows++; 
+        }
+
+		return $this->clear()->save();    
+           
+    }
+    
+    
+    /**
+    * delete rows
+    * 
+    */
+    public function delete()
+    {
+    
+        foreach ($this->xml->xpath('//database/' . $this->table . '/row' . $this->getQuery()) as $i => $row) {
+
+            $node = dom_import_simplexml($row);
+            $node->parentNode->removeChild($node);
+            
+            if(++$i == $this->limit && $i > 0) break;
+            
+            $this->affected_rows++; 
+        }
+
+        return $this->clear()->save();
+    
+    }
+    
+        
+    /**
+    * order by column asc or desc
+    * 
+    * @param string $column
+    * @param string $order
+	* @return xmlDb
+    */
+    public function orderBy($column, $order = 'asc')
+    {
+
+		$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
+        $this->sort = [$column, $direction];
+        
+        return $this;   
+    }
+    
+    
+    /**
+    * limit result
+    * 
+    * @param int $rows
+	* @return xmlDb
+    */
+    public function limit($limit)
+    {
+        $this->limit = intval($limit);
+
+        return $this; 
+    }
+    
+    
+    /**
+    * get last insert id 
+    * 
+    */
+    public function lastId()
+    {
+        $rows = $this->xml->xpath('//database/' . $this->table . '/row');
+
+		return count($rows) - 1;
+
+		/**
+		* row[last()] Not working, hm...
+
+		$row = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
+
+        if (isset($row[0]->id)) {
+            return $row[0]->id; 
+        }
+        
+        return 1;   
+
+		*/
+    }
+    
+    
+    /**
+    * get num of updated or deleted rows
+    * 
+	* @return int $num
+    */
+    public function affectedRows()
+    {
+        $num = $this->affected_rows;
+        $this->affected_rows = 0;
+        
+        return $num;
+    }
     
 
     /**
-    * add row to table
+    * add row to selected table
     */
     private function addRow()
     {
