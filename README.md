@@ -4,7 +4,7 @@
 ```html
 <?xml version="1.0" encoding="utf-8"?>
 <database>
-	<table_name>
+	<example_table>
 		<row>
 			<id>1</id>
 			<name>Name</name>
@@ -15,7 +15,7 @@
 			<name>Name 2</name>
 			<email>email2@gmail.com</email>
 		</row>
-	</table_name>
+	</example_table>
 	<another_table>
 		<row>
 			<id>1</id>
