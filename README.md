@@ -283,7 +283,7 @@ $db->in('example_table')
 
 // using where()
 
-$db->from('example_table')
+$db->in('example_table')
    ->where('name', 'Johnny')
    ->bind('lastname', 'Doe')
    ->update();
@@ -321,11 +321,11 @@ $db->from('example_table')->delete();
 // using where()
 
 // delete all rows where column "name" equal to "John" 
-$db->in('example_table')->where('name', 'John')->delete();
+$db->from('example_table')->where('name', 'John')->delete();
    
    
 // limiting delete
-$db->in('example_table')
+$db->from('example_table')
    ->where('id', 3, '>')
    ->limit(5)
    ->delete();
