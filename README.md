@@ -175,11 +175,11 @@ $db->addTable('example_table');
 // first we must select table by calling method from(table_name) or method in(table_name)
 
 // add column "id" and set its value to 1
-$db->table('example_table')->addColumn('id', 1);
+$db->in('example_table')->addColumn('id', 1);
 
 // add first name and last name columns
-$db->table('example_table')->addColumn('firstname', 'John');
-$db->table('example_table')->addColumn('lastname', 'Doe');
+$db->in('example_table')->addColumn('firstname', 'John');
+$db->in('example_table')->addColumn('lastname', 'Doe');
 ```
 addColumn() method is useful for extending the table structure, and it can be used when creating a new table for adding columns. <br />
 If you add columns in newly created table on this way, *column id must be set.*
@@ -456,10 +456,10 @@ echo $user->lastname;
 $db = xmlDb::connect('database');
 
 // select all columns by using asterisk "*"
-$db->table('example_table')->select('*');
+$db->from('example_table')->select('*');
 
 // select columns we need by providing their names separated by comma
-$db->table('example_table')->select('id, name, lastname');
+$db->from('example_table')->select('id, name, lastname');
 ```
      
 
