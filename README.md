@@ -10,7 +10,7 @@
 
 ### Introduction
 
-XML Db is PHP library which uses XML files for storing and organizing data aka flat-file database . Xml Db supports basic CRUD operations.
+PHP XmlDb uses XML files for storing and organizing data aka flat-file database . XmlDb supports basic CRUD operations.
 
 
 ### Database structure
@@ -476,6 +476,11 @@ $db->from('users')
 $data = $db->getAll();
 
 print_r($data);
+
+// contains
+$db->from('users')->where('name', 'Joh', 'contains');
+// this will return all rows where name column contain string "Joh" (John, Johnny, etc)
+$data = $db->getAll();
 ```
 
 #### Or where 
