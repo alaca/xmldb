@@ -647,7 +647,7 @@ class xmlDb
                 $data[] = (object) $columns;
                 
                 // check limit
-                if(++$i == $this->limit && $i > 0) break;
+                if(++$i == $this->limit) break;
             }  
             
             // save cache
@@ -700,7 +700,7 @@ class xmlDb
                 }    
             }
             
-            if (++$i == $this->limit && $i > 0) break;
+            if (++$i == $this->limit) break;
             
             $this->affected_rows++; 
         }
@@ -722,7 +722,7 @@ class xmlDb
             $node = dom_import_simplexml($row);
             $node->parentNode->removeChild($node);
             
-            if(++$i == $this->limit && $i > 0) break;
+            if(++$i == $this->limit) break;
             
             $this->affected_rows++; 
         }
