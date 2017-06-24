@@ -80,15 +80,10 @@ class xmlDb
         
         // try to load xml
         try {
-
-			libxml_use_internal_errors(true);
-
+	    libxml_use_internal_errors(true);
             $this->xml = new SimpleXMLElement(file_get_contents($this->db));
-
         } catch(Exception $e) {
-
             exit('Error: ' . $e->getMessage());
-
         } 
     }
     
@@ -129,7 +124,7 @@ class xmlDb
     public function backup()
     {
         if (!copy($this->db, $this->db . '.bak')) {
-            exit('Error: can\'t create backup');    
+            trigger_error('Can\'t create backup');    
         }   
          
         return $this;
@@ -146,7 +141,7 @@ class xmlDb
         if (file_exists($this->db . '.bak')) {
 
             if (!copy($this->db . '.bak', $this->db)) {
-                exit('Error: can\'t restore backup');
+                trigger_error('Can\'t restore backup');
             }
             
             static::clearCache();     
@@ -209,12 +204,10 @@ class xmlDb
     */
     public function addTable($name)
     {     
-		$table = $this->xml->xpath($name);
+        $table = $this->xml->xpath($name);
         
-		if (empty($table)) {
-
+	if (empty($table)) {
             $this->xml->addChild($name)->addChild('row');
-
             return $this->save();     
         }           
     }
@@ -243,14 +236,13 @@ class xmlDb
     */
     public function getTables()
     {
-
         $rows = $this->xml->xpath('//database');
                 
         if (empty($rows)) {
             return [];
         }
 		
-		$tables = [];
+	$tables = [];
         
         foreach ($rows[0] as $table) {
             $tables[] = $table->getName();
@@ -280,9 +272,7 @@ class xmlDb
             return $this->save();  
  
         } else {
-
-            exit('Error: can\'t add column, table not selected');
-
+            trigger_error('Can\'t add column, table not selected');
         }
             
     }
@@ -298,11 +288,9 @@ class xmlDb
         $table = $this->table;
         
         foreach($this->xml->$table as $row) {
-
             foreach($row as $i => $column) {
                 unset($column->$name);
             } 
-
         }
                 
         return $this->save();
@@ -326,7 +314,7 @@ class xmlDb
             return [];
         }
 
-		$columns = [];
+	$columns = [];
         
         foreach($rows[0] as $column) {
             $columns[] = $column->getName();
@@ -345,21 +333,21 @@ class xmlDb
     public function from($table)
     {
         $this->table = trim($table);
-        
+	    
         return $this;  
     }
 	
 	
-	/**
-	* from() alias;
-	* 
-	* @param string $table
-	* @return xmlDb
-	*/
-	public function in($table)
-	{
-		return $this->from($table);
-	}
+    /**
+    * from() alias;
+    * 
+    * @param string $table
+    * @return xmlDb
+    */
+    public function in($table)
+    {
+        return $this->from($table);
+    }
     
     
     /**
@@ -368,7 +356,7 @@ class xmlDb
     * @param string $table
     * @param string $primary_key
     * @param string $foreign_key
-	* @return xmlDb 
+    * @return xmlDb 
     */
     public function join($table, $primary_key, $foreign_key)
     {
@@ -384,32 +372,28 @@ class xmlDb
     
     
     /**
-	* selct columns
-	* 
-	* @param string $select
-	* @return xmlDb
-	*/
+    * selct columns
+    * 
+    * @param string $select
+    * @return xmlDb
+    */
     public function select($select)
     {
-		$select = trim($select);
+	$select = trim($select);
 
         if ($select != '*') {
-
             if (strpos($select, ',')) {
                 $columns = explode(',', $select);
                 $columns = array_map('trim', $select);
             } else {
                 $columns[] = $select;
             }
-
         } else {
-
             $columns = $this->getColumns();
             
             if ($this->join_table) {
                 $columns = array_unique(array_merge($columns, $this->getColumns($this->join_table)));
             }
-
         }
 
         $this->columns = $columns;
@@ -418,73 +402,69 @@ class xmlDb
     }
     
     
-	/**
-	* xpath query
-	* 
-	* @param string $column
-	* @param string $value
-	* @param string $comparison_operator
-	* @param string $logical_operator
-	* @return xmlDb
-	*/
+    /**
+    * xpath query
+    * 
+    * @param string $column
+    * @param string $value
+    * @param string $comparison_operator
+    * @param string $logical_operator
+    * @return xmlDb
+    */
     public function where($column, $value, $comparison_operator = '=', $logical_operator = 'and')
     {
-		
-		switch (strtolower($comparison_operator)) {
+	switch (strtolower($comparison_operator)) {
 
-			case 'contains':
+	    case 'contains':
 
-				/**
-				* to-do: case insensitive
-				*/
-				
-				$comparison_operator = is_null($this->query) ? '' : $logical_operator;
-
-				$this->query .= sprintf('%s contains(%s, "%s")', $comparison_operator, $column, $value);
+	        /**
+	        * to-do: case insensitive
+	        */
 			
-				break;
+	        $comparison_operator = is_null($this->query) ? '' : $logical_operator;
 
-			default:
+		$this->query .= sprintf('%s contains(%s, "%s")', $comparison_operator, $column, $value);
 			
-				if(!is_null($this->query)) {		
-					$column = " {$logical_operator} " . $column;
-				}
-				
-				$this->query .= sprintf('%s %s "%s"', $column, $comparison_operator, $value);
-				
+		break;
+
+            default:
+			
+		if(!is_null($this->query)) {		
+		    $column = " {$logical_operator} " . $column;
 		}
+				
+		$this->query .= sprintf('%s %s "%s"', $column, $comparison_operator, $value);
+				
+	}
          
         return $this;   
     }
 	
-	/**
-	* or xpath query
-	* 
-	* @param string $column
-	* @param string $value
-	* @param string $comparison_operator
-	* @return xmlDb
-	*/
-	public function orWhere($column, $value, $comparison_operator = '=')
+    /**
+    * or xpath query
+    * 
+    * @param string $column
+    * @param string $value
+    * @param string $comparison_operator
+    * @return xmlDb
+    */
+    public function orWhere($column, $value, $comparison_operator = '=')
     {
-		if (is_null($this->query)) {
-			
-			trigger_error('Where clause missing');
-			
-		}
+	if (is_null($this->query)) {
+	    trigger_error('Where clause missing');		
+	}
 
-		return $this->where($column, $value, $comparison_operator, ' or');
-
+	return $this->where($column, $value, $comparison_operator, ' or');
     }
 	
-	/**
-	* get xpath query
-	* 
-	*/
-	public function getQuery()
-	{
-		return is_null($this->query) ? '' : '[' . $this->query . ']';
-	}
+    /**
+    * get xpath query
+    * 
+    */
+    public function getQuery()
+    {
+	return is_null($this->query) ? '' : '[' . $this->query . ']';
+    }
     
     
     /**
@@ -547,7 +527,7 @@ class xmlDb
 
         }
         
-		return $this->clear()->save();
+	return $this->clear()->save();
    
     }
     
@@ -580,14 +560,14 @@ class xmlDb
     {               
         $data = $columns = [];  
   
-  		// check cache
+  	// check cache
         if (file_exists($cache_file = dirname(__FILE__) . '/data/' . md5($this->table . $this->join_table . $this->query . $this->limit) . '.cache') && $this->cache) {
             // load cache
             $data = unserialize(file_get_contents($cache_file));
 
         } else {
 			
-			// if columns are not set explicitly, get them all
+	    // if columns are not set explicitly, get them all
             if (empty($this->columns)) {
                 $this->columns = $this->getColumns($this->table);    
             } 
@@ -651,9 +631,9 @@ class xmlDb
             }  
             
             // save cache
-			if ($this->cache) {
-				file_put_contents($cache_file, serialize($data));  
-			}
+	    if ($this->cache) {
+		file_put_contents($cache_file, serialize($data));  
+	    }
         }
         
         // sort result
@@ -671,7 +651,7 @@ class xmlDb
             return $data[0];
         }
 
-		$this->clear();  
+	$this->clear();  
         
         // return all rows
         return $data;
@@ -705,7 +685,7 @@ class xmlDb
             $this->affected_rows++; 
         }
 
-		return $this->clear()->save();    
+	return $this->clear()->save();    
            
     }
     
@@ -737,12 +717,11 @@ class xmlDb
     * 
     * @param string $column
     * @param string $order
-	* @return xmlDb
+    * @return xmlDb
     */
     public function orderBy($column, $order = 'asc')
     {
-
-		$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
+	$direction = (strtolower($order) == 'desc') ? SORT_DESC : SORT_ASC;
         $this->sort = [$column, $direction];
         
         return $this;   
@@ -758,7 +737,7 @@ class xmlDb
     public function limit($limit)
     {
         $this->limit = intval($limit);
-
+	    
         return $this; 
     }
     
@@ -771,12 +750,12 @@ class xmlDb
     {
         $rows = $this->xml->xpath('//database/' . $this->table . '/row');
 
-		return count($rows) - 1;
+	return count($rows) - 1;
 
-		/**
-		* row[last()] Not working, hm...
+	/**
+	* row[last()] Not working, hm...
 
-		$row = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
+	$row = $this->xml->xpath('//database/' . $this->table . '/row[last()]');
 
         if (isset($row[0]->id)) {
             return $row[0]->id; 
@@ -784,14 +763,14 @@ class xmlDb
         
         return 1;   
 
-		*/
+	*/
     }
     
     
     /**
     * get num of updated or deleted rows
     * 
-	* @return int $num
+    * @return int $num
     */
     public function affectedRows()
     {
@@ -817,7 +796,7 @@ class xmlDb
     */
     private function save()
     {        
-		static::clearCache();
+	static::clearCache();
 
         return $this->xml->asXML($this->db);   
     }
@@ -828,17 +807,17 @@ class xmlDb
     */
     private function clear()
     {
-		$this->table         = null;
-	    $this->query         = null;
-	    $this->bind          = [];
-		$this->columns       = [];
-	    $this->sort          = [];
-	    $this->join_table    = null;
-	    $this->primary_key   = null;
-	    $this->foreign_key   = null;
-		$this->limit         = 0;
+	$this->table         = null;
+	$this->query         = null;
+	$this->bind          = [];
+	$this->columns       = [];
+        $this->sort          = [];
+	$this->join_table    = null;
+	$this->primary_key   = null;
+	$this->foreign_key   = null;
+        $this->limit         = 0;
 
-		return $this;
+	return $this;
     }
     
     
@@ -869,10 +848,10 @@ class xmlDb
     /**
     * delete cache files
     */
-	public static function clearCache()
-	{
-		foreach (glob(dirname(__FILE__) . '/data/*.cache') as $file) {
-			unlink($file);
-		}
+    public static function clearCache()
+    {
+	foreach (glob(dirname(__FILE__) . '/data/*.cache') as $file) {
+	    unlink($file);
 	}
+    }
 }
