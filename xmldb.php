@@ -9,34 +9,34 @@
 class xmlDb
 {
 
-	/**
-	* xmlDb instances
-	* 
-	* @var array
-	*/
-	private static $instance = [];
+    /**
+    * xmlDb instance
+    * 
+    * @var array
+    */
+    private static $instance = [];
 
-	/**
-	* cache queries
-	* 
-	* @var boolean
-	*/
-	public  $cache         = true;
+    /**
+    * cache queries
+    * 
+    * @var boolean
+    */
+    public  $cache         = true;
 
-	private $db            = null;
-	private $fh            = null;
-	private $lock          = null;
-	private $xml           = null;
-	private $table         = null;
-	private $query         = null;
-	private $bind          = [];
-	private $columns       = [];
-	private $sort          = [];
-	private $join_table    = null;
-	private $primary_key   = null;
-	private $foreign_key   = null;
-	private $limit         = 0;
-	private $affected_rows = 0;
+    private $db            = null;
+    private $fh            = null;
+    private $lock          = null;
+    private $xml           = null;
+    private $table         = null;
+    private $query         = null;
+    private $bind          = [];
+    private $columns       = [];
+    private $sort          = [];
+    private $join_table    = null;
+    private $primary_key   = null;
+    private $foreign_key   = null;
+    private $limit         = 0;
+    private $affected_rows = 0;
 
 
     /**
