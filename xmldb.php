@@ -384,7 +384,7 @@ class xmlDb
         if ($select != '*') {
             if (strpos($select, ',')) {
                 $columns = explode(',', $select);
-                $columns = array_map('trim', $select);
+                $columns = array_map('trim', $columns);
             } else {
                 $columns[] = $select;
             }
